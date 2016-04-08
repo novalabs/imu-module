@@ -1,0 +1,25 @@
+{
+  "name": "imu",
+  "description": "IMU",
+  "chip": "STM32F303CB",
+  "required_packages": [
+    "common_msgs",
+    "sensors",
+    "sensor_msgs",
+    "imu",
+    "led"
+  ],
+  "chibios_components": [
+    "rt",
+    "hal",
+    "adc",
+    "ext",
+    "pal",
+    "serial",
+    "spi",
+    "uart",
+    "chprintf",
+    "shell",
+    "syscalls"
+  ]
+}
