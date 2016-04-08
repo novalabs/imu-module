@@ -6,8 +6,8 @@
     "common_msgs",
     "sensors",
     "sensor_msgs",
-    "imu",
-    "led"
+    "led",
+    "madgwick"
   ],
   "chibios_components": [
     "rt",
