@@ -1,3 +1,9 @@
+/* COPYRIGHT (c) 2016 Nova Labs SRL
+ *
+ * All rights reserved. All use of this software and documentation is
+ * subject to the License Agreement located in the file LICENSE.
+ */
+ 
 #include <Core/MW/Middleware.hpp>
 
 #include "ch.h"
@@ -34,14 +40,14 @@ sensors::LSM303D_Acc&  Module::acc  = _acc;
 sensors::LSM303D_Mag&  Module::mag  = _mag;
 
 static const SPIConfig spi1cfg = {
-	0, 0, 0, SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, 0
+   0, 0, 0, SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, 0
 };
 
 static THD_WORKING_AREA(wa_info, 1024);
 static Core::MW::RTCANTransport rtcantra(RTCAND1);
 
 RTCANConfig rtcan_config = {
-	1000000, 100, 60
+   1000000, 100, 60
 };
 
 #ifndef CORE_MODULE_NAME
@@ -51,22 +57,22 @@ RTCANConfig rtcan_config = {
 Core::MW::Middleware Core::MW::Middleware::instance(CORE_MODULE_NAME, "BOOT_" CORE_MODULE_NAME);
 
 static EXTConfig extcfg = {   {
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL},
-											{EXT_CH_MODE_DISABLED, NULL}
-										}};
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL},
+                                 {EXT_CH_MODE_DISABLED, NULL}
+                              }};
 
 Module::Module()
 {}
@@ -76,44 +82,44 @@ Module::initialize()
 {
 //	CORE_ASSERT(Core::MW::Middleware::instance.is_stopped()); // TODO: capire perche non va...
 
-	static bool initialized = false;
+   static bool initialized = false;
 
-	if (!initialized) {
-		halInit();
-		chSysInit();
+   if (!initialized) {
+      halInit();
+      chSysInit();
 
-		Core::MW::Middleware::instance.initialize(wa_info, sizeof(wa_info), Core::MW::Thread::LOWEST);
-		rtcantra.initialize(rtcan_config);
-		Core::MW::Middleware::instance.start();
+      Core::MW::Middleware::instance.initialize(wa_info, sizeof(wa_info), Core::MW::Thread::LOWEST);
+      rtcantra.initialize(rtcan_config);
+      Core::MW::Middleware::instance.start();
 
 
-		spiStart(&SPID1, &spi1cfg);
-		extStart(&EXTD1, &extcfg);
+      spiStart(&SPID1, &spi1cfg);
+      extStart(&EXTD1, &extcfg);
 
-		_gyro_device.probe();
-		_am_device.probe();
+      _gyro_device.probe();
+      _am_device.probe();
 
-		gyro.init();
-		acc.init();
-		mag.init();
+      gyro.init();
+      acc.init();
+      mag.init();
 
-		initialized = true;
-	}
+      initialized = true;
+   }
 
-	return initialized;
+   return initialized;
 } // Board::initialize
 
 // Leftover from CoreBoard (where LED_PAD cannot be defined
 void
 Core::MW::CoreModule::Led::toggle()
 {
-	_led.toggle();
+   _led.toggle();
 }
 
 void
 Core::MW::CoreModule::Led::write(
-		unsigned on
+   unsigned on
 )
 {
-	_led.write(on);
+   _led.write(on);
 }
