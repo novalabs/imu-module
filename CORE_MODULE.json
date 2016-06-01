@@ -4,7 +4,9 @@
   "chip": "STM32F303CB",
   "required_packages": [
     "common_msgs",
-    "sensors",
+    "LSM303D_driver",
+    "L3GD20H_driver",
+    "sensor_publisher",
     "sensor_msgs",
     "led",
     "madgwick"

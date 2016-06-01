@@ -6,9 +6,6 @@
  
 #pragma once
 
-#define USE_SENSOR_LSM303D
-#define USE_SENSOR_L3GD20H
-
 #include <Core/MW/Time.hpp>
 
 #include <common_msgs/Vector3_i16.hpp>

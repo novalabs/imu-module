@@ -12,9 +12,11 @@
 #include <Core/HW/SPI.hpp>
 #include <Core/HW/EXT.hpp>
 #include <Core/MW/Thread.hpp>
+
 #include <Module.hpp>
-#include "sensors/L3GD20H.hpp"
-#include "sensors/LSM303D.hpp"
+
+#include <L3GD20H_driver/L3GD20H.hpp>
+#include <LSM303D_driver/LSM303D.hpp>
 
 using AM_PAD_CS = Core::HW::Pad_<Core::HW::GPIO_A, GPIOA_AM_CS>;
 static Core::HW::SPIDevice_<Core::HW::SPI_1, AM_PAD_CS> AM_SPI_DEVICE;
