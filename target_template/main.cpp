@@ -7,26 +7,25 @@
 #include <sensor_msgs/RPY_f32.hpp>
 
 // NODES
-#include <sensors/Publisher.hpp>
+#include <sensor_publisher/Publisher.hpp>
 #include <led/Publisher.hpp>
 #include <led/Subscriber.hpp>
 #include <madgwick/Madgwick.hpp>
-//@@NODE_HEADERS@@//
 
 // BOARD IMPL
-#include <sensors/L3GD20H.hpp>
-#include <sensors/LSM303D.hpp>
+#include <L3GD20H_driver/L3GD20H.hpp>
+#include <LSM303D_driver/LSM303D.hpp>
 
 // *** DO NOT MOVE ***
 Module module;
 
 // TYPES
-using Vector3_i16_Publisher = sensors::Publisher<common_msgs::Vector3_i16>;
+using Vector3_i16_Publisher = sensor_publisher::Publisher<common_msgs::Vector3_i16>;
 
 // NODES
 Vector3_i16_Publisher gyro_publisher("gyro_publisher", module.gyro, Core::MW::Thread::PriorityEnum::NORMAL + 1);
 Vector3_i16_Publisher acc_publisher("acc_publisher", module.acc, Core::MW::Thread::PriorityEnum::NORMAL + 1);
-Vector3_i16_Publisher mag_publisher("mag_publisher", module.mag);
+Vector3_i16_Publisher mag_publisher("mag_publisher", module.mag, Core::MW::Thread::PriorityEnum::NORMAL + 1);
 
 led::Publisher led_publisher("led_publisher", Core::MW::Thread::PriorityEnum::LOWEST);
 led::Subscriber led_subscriber("led_subscriber", Core::MW::Thread::PriorityEnum::LOWEST);
