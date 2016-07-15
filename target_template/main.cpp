@@ -1,35 +1,35 @@
-#include <Configuration.hpp>
+#include <ModuleConfiguration.hpp>
 #include <Module.hpp>
 
 // MESSAGES
-#include <common_msgs/Led.hpp>
-#include <common_msgs/String64.hpp>
-#include <sensor_msgs/RPY_f32.hpp>
+#include <core/common_msgs/Led.hpp>
+#include <core/common_msgs/String64.hpp>
+#include <core/sensor_msgs/RPY_f32.hpp>
 
 // NODES
-#include <sensor_publisher/Publisher.hpp>
-#include <led/Publisher.hpp>
-#include <led/Subscriber.hpp>
-#include <madgwick/Madgwick.hpp>
+#include <core/sensor_publisher/Publisher.hpp>
+#include <core/led/Publisher.hpp>
+#include <core/led/Subscriber.hpp>
+#include <core/madgwick/Madgwick.hpp>
 
 // BOARD IMPL
-#include <L3GD20H_driver/L3GD20H.hpp>
-#include <LSM303D_driver/LSM303D.hpp>
+#include <core/L3GD20H_driver/L3GD20H.hpp>
+#include <core/LSM303D_driver/LSM303D.hpp>
 
 // *** DO NOT MOVE ***
 Module module;
 
 // TYPES
-using Vector3_i16_Publisher = sensor_publisher::Publisher<common_msgs::Vector3_i16>;
+using Vector3_i16_Publisher = core::sensor_publisher::Publisher<core::common_msgs::Vector3_i16>;
 
 // NODES
-Vector3_i16_Publisher gyro_publisher("gyro_publisher", module.gyro, Core::MW::Thread::PriorityEnum::NORMAL + 1);
-Vector3_i16_Publisher acc_publisher("acc_publisher", module.acc, Core::MW::Thread::PriorityEnum::NORMAL + 1);
-Vector3_i16_Publisher mag_publisher("mag_publisher", module.mag, Core::MW::Thread::PriorityEnum::NORMAL + 1);
+Vector3_i16_Publisher gyro_publisher("gyro_publisher", module.gyro, core::os::Thread::PriorityEnum::NORMAL + 1);
+Vector3_i16_Publisher acc_publisher("acc_publisher", module.acc, core::os::Thread::PriorityEnum::NORMAL + 1);
+Vector3_i16_Publisher mag_publisher("mag_publisher", module.mag, core::os::Thread::PriorityEnum::NORMAL + 1);
 
-led::Publisher     led_publisher("led_publisher", Core::MW::Thread::PriorityEnum::LOWEST);
-led::Subscriber    led_subscriber("led_subscriber", Core::MW::Thread::PriorityEnum::LOWEST);
-madgwick::Madgwick madgwick_filter("madgwick");
+core::led::Publisher     led_publisher("led_publisher", core::os::Thread::PriorityEnum::LOWEST);
+core::led::Subscriber    led_subscriber("led_subscriber", core::os::Thread::PriorityEnum::LOWEST);
+core::madgwick::Madgwick madgwick_filter("madgwick");
 
 // MAIN
 extern "C" {
@@ -38,25 +38,39 @@ extern "C" {
    {
       module.initialize();
 
-      // Led subscriber node
-      led_subscriber.configuration.topic = "led";
       module.add(led_subscriber);
-
-      // Sensor nodes
-      gyro_publisher.configuration.topic = "gyro";
-      acc_publisher.configuration.topic  = "acc";
-      mag_publisher.configuration.topic  = "mag";
       module.add(gyro_publisher);
       module.add(acc_publisher);
       module.add(mag_publisher);
+      module.add(madgwick_filter);
+
+      // Led subscriber node
+      core::led::SubscriberConfiguration led_subscriber_configuration;
+      led_subscriber_configuration.topic = "led";
+      led_subscriber.setConfiguration(led_subscriber_configuration);
+
+      // Sensor nodes
+      core::sensor_publisher::Configuration gyro_publisher_configuration;
+      gyro_publisher_configuration.topic = "gyro";
+      gyro_publisher.setConfiguration(gyro_publisher_configuration);
+
+      core::sensor_publisher::Configuration acc_publisher_configuration;
+      acc_publisher_configuration.topic = "acc";
+      acc_publisher.setConfiguration(acc_publisher_configuration);
+
+      core::sensor_publisher::Configuration mag_publisher_configuration;
+      mag_publisher_configuration.topic = "mag";
+      mag_publisher.setConfiguration(mag_publisher_configuration);
 
       // Madgwick filter node
-      madgwick_filter.configuration.topicGyro = gyro_publisher.configuration.topic;
-      madgwick_filter.configuration.topicAcc  = acc_publisher.configuration.topic;
-      madgwick_filter.configuration.topicMag  = mag_publisher.configuration.topic;
-      madgwick_filter.configuration.topic     = "imu";
-      madgwick_filter.configuration.frequency = 50.0f;
-      module.add(madgwick_filter);
+      core::madgwick::MadgwickConfiguration madgwick_filter_configuration;
+      madgwick_filter_configuration.topicGyro = gyro_publisher_configuration.topic;
+      madgwick_filter_configuration.topicAcc  = acc_publisher_configuration.topic;
+      madgwick_filter_configuration.topicMag  = mag_publisher_configuration.topic;
+      madgwick_filter_configuration.topic     = "imu";
+      madgwick_filter_configuration.frequency = 50.0f;
+
+      madgwick_filter.setConfiguration(madgwick_filter_configuration);
 
       // Setup and run
       module.setup();
@@ -68,9 +82,11 @@ extern "C" {
             module.halt("This must not happen!");
          }
 
-         Core::MW::Thread::sleep(Core::MW::Time::ms(500));
+         module.keepAlive();
+
+         core::os::Thread::sleep(core::os::Time::ms(500));
       }
 
-      return Core::MW::Thread::OK;
+      return core::os::Thread::OK;
    } // main
 }

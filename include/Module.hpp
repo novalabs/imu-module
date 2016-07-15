@@ -6,21 +6,21 @@
 
 #pragma once
 
-#include <Configuration.hpp>
-#include <Core/MW/CoreModule.hpp>
-#include <Core/MW/CoreSensor.hpp>
+#include <ModuleConfiguration.hpp>
+#include <core/mw/CoreModule.hpp>
+#include <core/mw/CoreSensor.hpp>
 
 namespace sensors {}
 
 // Forward declarations
 namespace sensors {
-   class L3GD20H_Gyro;
-   class LSM303D_Acc;
-   class LSM303D_Mag;
+class L3GD20H_Gyro;
+class LSM303D_Acc;
+class LSM303D_Mag;
 }
 
 class Module:
-   public Core::MW::CoreModule
+   public core::mw::CoreModule
 {
 public:
 // --- DEVICES ----------------------------------------------------------------

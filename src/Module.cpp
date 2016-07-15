@@ -4,30 +4,30 @@
  * subject to the License Agreement located in the file LICENSE.
  */
 
-#include <Core/MW/Middleware.hpp>
+#include <core/mw/Middleware.hpp>
 
 #include "ch.h"
 #include "hal.h"
 
-#include <Core/HW/SPI.hpp>
-#include <Core/HW/EXT.hpp>
-#include <Core/MW/Thread.hpp>
+#include <core/hw/SPI.hpp>
+#include <core/hw/EXT.hpp>
+#include <core/os/Thread.hpp>
 
 #include <Module.hpp>
 
-#include <L3GD20H_driver/L3GD20H.hpp>
-#include <LSM303D_driver/LSM303D.hpp>
+#include <core/L3GD20H_driver/L3GD20H.hpp>
+#include <core/LSM303D_driver/LSM303D.hpp>
 
-using AM_PAD_CS = Core::HW::Pad_<Core::HW::GPIO_A, GPIOA_AM_CS>;
-static Core::HW::SPIDevice_<Core::HW::SPI_1, AM_PAD_CS> AM_SPI_DEVICE;
-static Core::HW::EXTChannel_<Core::HW::EXT_1, GPIOA_AM_INT1, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> ACC_EXT_CHANNEL;
-static Core::HW::EXTChannel_<Core::HW::EXT_1, GPIOA_AM_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> MAG_EXT_CHANNEL;
+using AM_PAD_CS = core::hw::Pad_<core::hw::GPIO_A, GPIOA_AM_CS>;
+static core::hw::SPIDevice_<core::hw::SPI_1, AM_PAD_CS> AM_SPI_DEVICE;
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT1, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> ACC_EXT_CHANNEL;
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> MAG_EXT_CHANNEL;
 
-using GYRO_PAD_CS = Core::HW::Pad_<Core::HW::GPIO_B, GPIOB_GYRO_CS>;
-static Core::HW::SPIDevice_<Core::HW::SPI_1, GYRO_PAD_CS> GYRO_SPI_DEVICE;
-static Core::HW::EXTChannel_<Core::HW::EXT_1, GPIOB_GYRO_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOB> GYRO_EXT_CHANNEL;
+using GYRO_PAD_CS = core::hw::Pad_<core::hw::GPIO_B, GPIOB_GYRO_CS>;
+static core::hw::SPIDevice_<core::hw::SPI_1, GYRO_PAD_CS> GYRO_SPI_DEVICE;
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOB_GYRO_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOB> GYRO_EXT_CHANNEL;
 
-using LED_PAD = Core::HW::Pad_<Core::HW::GPIO_C, LED_PIN>;
+using LED_PAD = core::hw::Pad_<core::hw::GPIO_C, LED_PIN>;
 
 static LED_PAD _led;
 
@@ -46,7 +46,7 @@ static const SPIConfig spi1cfg = {
 };
 
 static THD_WORKING_AREA(wa_info, 1024);
-static Core::MW::RTCANTransport rtcantra(RTCAND1);
+static core::mw::RTCANTransport rtcantra(RTCAND1);
 
 RTCANConfig rtcan_config = {
    1000000, 100, 60
@@ -56,7 +56,7 @@ RTCANConfig rtcan_config = {
 #define CORE_MODULE_NAME "IMU"
 #endif
 
-Core::MW::Middleware Core::MW::Middleware::instance(CORE_MODULE_NAME, "BOOT_" CORE_MODULE_NAME);
+core::mw::Middleware core::mw::Middleware::instance(CORE_MODULE_NAME, "BOOT_" CORE_MODULE_NAME);
 
 static EXTConfig extcfg = {   {
                                  {EXT_CH_MODE_DISABLED, NULL},
@@ -82,7 +82,7 @@ Module::Module()
 bool
 Module::initialize()
 {
-//	CORE_ASSERT(Core::MW::Middleware::instance.is_stopped()); // TODO: capire perche non va...
+//	CORE_ASSERT(core::mw::Middleware::instance.is_stopped()); // TODO: capire perche non va...
 
    static bool initialized = false;
 
@@ -90,9 +90,9 @@ Module::initialize()
       halInit();
       chSysInit();
 
-      Core::MW::Middleware::instance.initialize(wa_info, sizeof(wa_info), Core::MW::Thread::LOWEST);
+      core::mw::Middleware::instance.initialize(wa_info, sizeof(wa_info), core::os::Thread::LOWEST);
       rtcantra.initialize(rtcan_config);
-      Core::MW::Middleware::instance.start();
+      core::mw::Middleware::instance.start();
 
 
       spiStart(&SPID1, &spi1cfg);
@@ -113,13 +113,13 @@ Module::initialize()
 
 // Leftover from CoreBoard (where LED_PAD cannot be defined
 void
-Core::MW::CoreModule::Led::toggle()
+core::mw::CoreModule::Led::toggle()
 {
    _led.toggle();
 }
 
 void
-Core::MW::CoreModule::Led::write(
+core::mw::CoreModule::Led::write(
    unsigned on
 )
 {
