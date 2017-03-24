@@ -1,7 +1,7 @@
 {
   "name": "imu",
   "description": "IMU",
-  "chip": "STM32F303CB",
+  "chip": "STM32F303CC",
   "required_packages": [
     "common_msgs",
     "LSM303D_driver",
