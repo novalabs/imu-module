@@ -9,7 +9,8 @@
     "sensor_publisher",
     "sensor_msgs",
     "led",
-    "madgwick"
+    "madgwick",
+    "snippets"
   ],
   "chibios_components": [
     "rt",

@@ -12,6 +12,7 @@
 
 #include <core/hw/SPI.hpp>
 #include <core/hw/EXT.hpp>
+#include <core/hw/IWDG.hpp>
 #include <core/os/Thread.hpp>
 
 #include <Module.hpp>
@@ -43,39 +44,45 @@ sensors::LSM303D_Acc&  Module::acc  = _acc;
 sensors::LSM303D_Mag&  Module::mag  = _mag;
 
 static const SPIConfig spi1cfg = {
-   0, 0, 0, SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, 0
+    0, 0, 0, SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, 0
 };
 
 static core::os::Thread::Stack<1024> management_thread_stack;
 static core::mw::RTCANTransport      rtcantra(&RTCAND1);
 
 RTCANConfig rtcan_config = {
-   1000000, 100, 60
+    1000000, 100, 60
 };
 
-#ifndef CORE_MODULE_NAME
-#define CORE_MODULE_NAME "IMU"
-#endif
+// ----------------------------------------------------------------------------
+// CoreModule STM32FlashConfigurationStorage
+// ----------------------------------------------------------------------------
+#include <core/snippets/CoreModuleSTM32FlashConfigurationStorage.hpp>
+// ----------------------------------------------------------------------------
 
-core::mw::Middleware core::mw::Middleware::instance(CORE_MODULE_NAME, "BOOT_" CORE_MODULE_NAME);
+core::mw::Middleware
+core::mw::Middleware::instance(
+    ModuleConfiguration::MODULE_NAME
+);
 
-static EXTConfig extcfg = {   {
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL},
-                                 {EXT_CH_MODE_DISABLED, NULL}
-                              }};
+
+static EXTConfig extcfg = {    {
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL},
+                                   {EXT_CH_MODE_DISABLED, NULL}
+                               }};
 
 Module::Module()
 {}
@@ -85,68 +92,34 @@ Module::initialize()
 {
 //	CORE_ASSERT(core::mw::Middleware::instance.is_stopped()); // TODO: capire perche non va...
 
-   static bool initialized = false;
+    static bool initialized = false;
 
-   if (!initialized) {
-      halInit();
-      chSysInit();
+    if (!initialized) {
+        halInit();
+        chSysInit();
 
-      core::mw::Middleware::instance.initialize(management_thread_stack, management_thread_stack.size(), core::os::Thread::LOWEST);
-      rtcantra.initialize(rtcan_config);
-      core::mw::Middleware::instance.start();
+        core::mw::Middleware::instance.initialize(name(), management_thread_stack, management_thread_stack.size(), core::os::Thread::LOWEST);
+        rtcantra.initialize(rtcan_config, canID());
+        core::mw::Middleware::instance.start();
 
+        spiStart(&SPID1, &spi1cfg);
+        extStart(&EXTD1, &extcfg);
 
-      spiStart(&SPID1, &spi1cfg);
-      extStart(&EXTD1, &extcfg);
+        _gyro_device.probe();
+        _am_device.probe();
 
-      _gyro_device.probe();
-      _am_device.probe();
+        gyro.init();
+        acc.init();
+        mag.init();
 
-      gyro.init();
-      acc.init();
-      mag.init();
+        initialized = true;
+    }
 
-      initialized = true;
-   }
-
-   return initialized;
+    return initialized;
 } // Board::initialize
 
 // ----------------------------------------------------------------------------
 // CoreModule HW specific implementation
 // ----------------------------------------------------------------------------
-
-void
-core::mw::CoreModule::Led::toggle()
-{
-    _led.toggle();
-}
-
-void
-core::mw::CoreModule::Led::write(
-    unsigned on
-)
-{
-    _led.write(on);
-}
-
-void
-core::mw::CoreModule::reset()
-{
-}
-
-void
-core::mw::CoreModule::keepAlive()
-{
-}
-
-void
-core::mw::CoreModule::disableBootloader()
-{
-}
-
-void
-core::mw::CoreModule::enableBootloader()
-{
-}
-
+#include <core/snippets/CoreModuleHWSpecificImplementation.hpp>
+// ----------------------------------------------------------------------------
