@@ -1,92 +1,101 @@
+/* IMU Module template file
+ *
+ */
+
 #include <ModuleConfiguration.hpp>
 #include <Module.hpp>
 
-// MESSAGES
+// --- BOARD IMPL -------------------------------------------------------------
+#include <core/L3GD20H_driver/L3GD20H.hpp>
+#include <core/LSM303D_driver/LSM303D.hpp>
+
+// --- MODULE -----------------------------------------------------------------
+Module module;
+
+// *** DO NOT MOVE THE CODE ABOVE THIS COMMENT *** //
+
+// --- MESSAGES ---------------------------------------------------------------
 #include <core/common_msgs/Led.hpp>
 #include <core/common_msgs/String64.hpp>
 #include <core/sensor_msgs/RPY_f32.hpp>
 
-// NODES
-#include <core/sensor_publisher/Publisher.hpp>
-#include <core/led/Publisher.hpp>
+// --- NODES ------------------------------------------------------------------
 #include <core/led/Subscriber.hpp>
+#include <core/sensor_publisher/Publisher.hpp>
 #include <core/madgwick/Madgwick.hpp>
 
-// BOARD IMPL
-#include <core/L3GD20H_driver/L3GD20H.hpp>
-#include <core/LSM303D_driver/LSM303D.hpp>
-
-// *** DO NOT MOVE ***
-Module module;
-
-// TYPES
+// --- TYPES ------------------------------------------------------------------
 using Vector3_i16_Publisher = core::sensor_publisher::Publisher<core::common_msgs::Vector3_i16>;
 
-// NODES
-Vector3_i16_Publisher gyro_publisher("gyro_publisher", module.gyro, core::os::Thread::PriorityEnum::NORMAL + 1);
-Vector3_i16_Publisher acc_publisher("acc_publisher", module.acc, core::os::Thread::PriorityEnum::NORMAL + 1);
-Vector3_i16_Publisher mag_publisher("mag_publisher", module.mag, core::os::Thread::PriorityEnum::NORMAL + 1);
+// --- CONFIGURATIONS ---------------------------------------------------------
+core::led::SubscriberConfiguration       led_subscriber_configuration_default;
+Vector3_i16_Publisher::ConfigurationType gyro_publisher_configuration_default;
+Vector3_i16_Publisher::ConfigurationType acc_publisher_configuration_default;
+Vector3_i16_Publisher::ConfigurationType mag_publisher_configuration_default;
+core::madgwick::MadgwickConfiguration    madgwick_filter_configuration_default;
 
-core::led::Publisher     led_publisher("led_publisher", core::os::Thread::PriorityEnum::LOWEST);
-core::led::Subscriber    led_subscriber("led_subscriber", core::os::Thread::PriorityEnum::LOWEST);
+// --- NODES ------------------------------------------------------------------
+core::led::Subscriber    led_subscriber("led_sub", core::os::Thread::PriorityEnum::LOWEST);
+Vector3_i16_Publisher    gyro_publisher("gyro_publisher", module.gyro, core::os::Thread::PriorityEnum::NORMAL + 1);
+Vector3_i16_Publisher    acc_publisher("acc_publisher", module.acc, core::os::Thread::PriorityEnum::NORMAL + 1);
+Vector3_i16_Publisher    mag_publisher("mag_publisher", module.mag, core::os::Thread::PriorityEnum::NORMAL + 1);
 core::madgwick::Madgwick madgwick_filter("madgwick");
 
-// MAIN
+// --- DEVICE CONFIGURATION ---------------------------------------------------
+
+// --- MAIN -------------------------------------------------------------------
 extern "C" {
-   int
-   main()
-   {
-      module.initialize();
+    int
+    main()
+    {
+        module.initialize();
 
-      module.add(led_subscriber);
-      module.add(gyro_publisher);
-      module.add(acc_publisher);
-      module.add(mag_publisher);
-      module.add(madgwick_filter);
+        // Device configurations
 
-      // Led subscriber node
-      core::led::SubscriberConfiguration led_subscriber_configuration;
-      led_subscriber_configuration.topic = "led";
-      led_subscriber.setConfiguration(led_subscriber_configuration);
+        // Default configuration
+        led_subscriber_configuration_default.topic = "led";
+        gyro_publisher_configuration_default.topic = "gyro";
+        acc_publisher_configuration_default.topic  = "acc";
+        mag_publisher_configuration_default.topic  = "mag";
+        madgwick_filter_configuration_default.topicGyro = gyro_publisher_configuration_default.topic;
+        madgwick_filter_configuration_default.topicAcc  = acc_publisher_configuration_default.topic;
+        madgwick_filter_configuration_default.topicMag  = mag_publisher_configuration_default.topic;
+        madgwick_filter_configuration_default.topic     = "imu";
+        madgwick_filter_configuration_default.frequency = 50.0f;
 
-      // Sensor nodes
-      core::sensor_publisher::Configuration gyro_publisher_configuration;
-      gyro_publisher_configuration.topic = "gyro";
-      gyro_publisher.setConfiguration(gyro_publisher_configuration);
+        // Add configurable objects to the configuration manager...
+        module.configurations().add(led_subscriber, led_subscriber_configuration_default);
+        module.configurations().add(gyro_publisher, gyro_publisher_configuration_default);
+        module.configurations().add(acc_publisher, acc_publisher_configuration_default);
+        module.configurations().add(mag_publisher, mag_publisher_configuration_default);
+        module.configurations().add(madgwick_filter, madgwick_filter_configuration_default);
 
-      core::sensor_publisher::Configuration acc_publisher_configuration;
-      acc_publisher_configuration.topic = "acc";
-      acc_publisher.setConfiguration(acc_publisher_configuration);
+        // ... and load the configuration
+        module.configurations().loadFrom(module.configurationStorage());
 
-      core::sensor_publisher::Configuration mag_publisher_configuration;
-      mag_publisher_configuration.topic = "mag";
-      mag_publisher.setConfiguration(mag_publisher_configuration);
+        // Add nodes to the node manager...
+        module.nodes().add(led_subscriber);
+        module.nodes().add(gyro_publisher);
+        module.nodes().add(acc_publisher);
+        module.nodes().add(mag_publisher);
+        module.nodes().add(madgwick_filter);
 
-      // Madgwick filter node
-      core::madgwick::MadgwickConfiguration madgwick_filter_configuration;
-      madgwick_filter_configuration.topicGyro = gyro_publisher_configuration.topic;
-      madgwick_filter_configuration.topicAcc  = acc_publisher_configuration.topic;
-      madgwick_filter_configuration.topicMag  = mag_publisher_configuration.topic;
-      madgwick_filter_configuration.topic     = "imu";
-      madgwick_filter_configuration.frequency = 50.0f;
+        // ... and let's play!
+        module.nodes().setup();
+        module.nodes().run();
 
-      madgwick_filter.setConfiguration(madgwick_filter_configuration);
+        // Is everything going well?
+        for (;;) {
+            if (!module.nodes().areOk()) {
+                module.halt("This must not happen!");
+            }
 
-      // Setup and run
-      module.setup();
-      module.run();
+            core::os::Thread::sleep(core::os::Time::ms(500));
 
-      // Is everything going well?
-      for (;;) {
-         if (!module.isOk()) {
-            module.halt("This must not happen!");
-         }
+            // Remember to feed the (watch)dog!
+            module.keepAlive();
+        }
 
-         module.keepAlive();
-
-         core::os::Thread::sleep(core::os::Time::ms(500));
-      }
-
-      return core::os::Thread::OK;
-   } // main
+        return core::os::Thread::OK;
+    } // main
 }

@@ -2,9 +2,19 @@
   "name": "@@NAME@@",
   "description": "@@DESCRIPTION@@",
   "module": "imu",
-  "required_packages": [],
+  "os_version": "CHIBIOS_16",
+  "required_os_components": [],
+  "required_packages": [
+    "common_msgs",
+    "led",
+    "sensor_publisher",
+    "sensor_msgs",
+    "madgwick"
+  ],
   "sources": [
     "main.cpp"
   ],
-  "includes": []
+  "includes": [],
+  "bootloader_size": 16384,
+  "configuration_size": 2048
 }

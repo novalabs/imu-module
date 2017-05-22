@@ -1,0 +1,31 @@
+  {
+  "name": "@@NAME@@",
+  "description": "IMU module template configuration",
+  "objects": [
+    {
+      "object": "led_sub",
+      "package": "led",
+      "parameters": "SubscriberConfiguration"
+    },
+    {
+      "object": "gyro_pub",
+      "package": "sensor_publisher",
+      "parameters": "Configuration"
+    },
+    {
+      "object": "acc_pub",
+      "package": "sensor_publisher",
+      "parameters": "Configuration"
+    },
+    {
+      "object": "mag_pub",
+      "package": "sensor_publisher",
+      "parameters": "Configuration"
+    },
+    {
+      "object": "madgwick",
+      "package": "madgwick",
+      "parameters": "MadgwickConfiguration"
+    },
+  ]
+}
