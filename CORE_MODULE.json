@@ -4,12 +4,10 @@
   "chip": "STM32F303CC",
   "required_packages": [
     "common_msgs",
+    "stm32_flash",
+    "stm32_crc",
     "LSM303D_driver",
     "L3GD20H_driver",
-    "sensor_publisher",
-    "sensor_msgs",
-    "led",
-    "madgwick",
     "snippets"
   ],
   "chibios_components": [
