@@ -53,10 +53,10 @@ extern "C" {
         // Device configurations
 
         // Default configuration
-        led_subscriber_configuration_default.topic = "led";
-        gyro_publisher_configuration_default.topic = "gyro";
-        acc_publisher_configuration_default.topic  = "acc";
-        mag_publisher_configuration_default.topic  = "mag";
+        led_subscriber_configuration_default.topic      = "led";
+        gyro_publisher_configuration_default.topic      = "gyro";
+        acc_publisher_configuration_default.topic       = "acc";
+        mag_publisher_configuration_default.topic       = "mag";
         madgwick_filter_configuration_default.topicGyro = gyro_publisher_configuration_default.topic;
         madgwick_filter_configuration_default.topicAcc  = acc_publisher_configuration_default.topic;
         madgwick_filter_configuration_default.topicMag  = mag_publisher_configuration_default.topic;

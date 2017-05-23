@@ -25,21 +25,23 @@
 using LED_PAD = core::hw::Pad_<core::hw::GPIO_C, LED_PIN>;
 static LED_PAD _led;
 
+// DEVICES
+static core::hw::EXTController_<core::hw::EXT_1> _ext;
+static core::hw::SPIMaster_<core::hw::SPI_1>     _spi;
+
 // ACC + MAG
-using AM_PAD_CS = core::hw::Pad_<core::hw::GPIO_A, GPIOA_AM_CS>;
-static core::hw::SPIDevice_<core::hw::SPI_1, AM_PAD_CS> AM_SPI_DEVICE;
-static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT1, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> ACC_EXT_CHANNEL;
-static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> MAG_EXT_CHANNEL;
-static sensors::LSM303D     _am_device(AM_SPI_DEVICE, ACC_EXT_CHANNEL, MAG_EXT_CHANNEL);
-static sensors::LSM303D_Acc _acc(_am_device);
-static sensors::LSM303D_Mag _mag(_am_device);
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT1, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> _acc_interrupt_channel;
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOA_AM_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA> _mag_interrupt_channel;
+static core::hw::SPIDevice_<core::hw::SPI_1, core::hw::Pad_<core::hw::GPIO_A, GPIOA_AM_CS> > _am_spi;
+static sensors::LSM303D     _lsm303d(_am_spi, _acc_interrupt_channel, _mag_interrupt_channel);
+static sensors::LSM303D_Acc _acc(_lsm303d);
+static sensors::LSM303D_Mag _mag(_lsm303d);
 
 // GYRO
-using GYRO_PAD_CS = core::hw::Pad_<core::hw::GPIO_B, GPIOB_GYRO_CS>;
-static core::hw::SPIDevice_<core::hw::SPI_1, GYRO_PAD_CS> GYRO_SPI_DEVICE;
-static core::hw::EXTChannel_<core::hw::EXT_1, GPIOB_GYRO_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOB> GYRO_EXT_CHANNEL;
-static sensors::L3GD20H      _gyro_device(GYRO_SPI_DEVICE, GYRO_EXT_CHANNEL);
-static sensors::L3GD20H_Gyro _gyro(_gyro_device);
+static core::hw::EXTChannel_<core::hw::EXT_1, GPIOB_GYRO_INT2, EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOB> _gyro_interrupt_channel;
+static core::hw::SPIDevice_<core::hw::SPI_1, core::hw::Pad_<core::hw::GPIO_B, GPIOB_GYRO_CS> > _gyro_spi;
+static sensors::L3GD20H      _l3gd20h(_gyro_spi, _gyro_interrupt_channel);
+static sensors::L3GD20H_Gyro _gyro(_l3gd20h);
 
 // MODULE DEVICES
 sensors::L3GD20H_Gyro& Module::gyro = _gyro;
@@ -47,27 +49,28 @@ sensors::LSM303D_Acc&  Module::acc  = _acc;
 sensors::LSM303D_Mag&  Module::mag  = _mag;
 
 // DEVICE CONFIG
-static const SPIConfig spi1cfg = {
+static const SPIConfig _spi_config = {
     0, 0, 0, SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA, 0
 };
 
-static EXTConfig extcfg = {{
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL},
-							   {EXT_CH_MODE_DISABLED, NULL}
-						   }};
+static EXTConfig _ext_config = {    {
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL},
+                                        {EXT_CH_MODE_DISABLED, NULL}
+                                    }};
+
 
 // SYSTEM STUFF
 static core::os::Thread::Stack<1024> management_thread_stack;
@@ -101,11 +104,11 @@ Module::initialize()
         rtcantra.initialize(rtcan_config, canID());
         core::mw::Middleware::instance.start();
 
-        spiStart(&SPID1, &spi1cfg);
-        extStart(&EXTD1, &extcfg);
+        _ext.start(_ext_config);
+        _spi.start(_spi_config);
 
-        _gyro_device.probe();
-        _am_device.probe();
+        _l3gd20h.probe();
+        _lsm303d.probe();
 
         gyro.init();
         acc.init();

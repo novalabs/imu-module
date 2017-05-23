@@ -17,6 +17,9 @@
     },
     "madgwick": {
       "topic": "imu",
+      "topicGyro": "gyro",
+      "topicAcc": "acc",
+      "topicMag": "mag",
       "frequency": 50
     }
   }

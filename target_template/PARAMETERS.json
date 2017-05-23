@@ -26,6 +26,6 @@
       "object": "madgwick",
       "package": "madgwick",
       "parameters": "MadgwickConfiguration"
-    },
+    }
   ]
 }
