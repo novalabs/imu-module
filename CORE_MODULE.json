@@ -1,6 +1,6 @@
 {
   "name": "imu",
-  "description": "IMU",
+  "description": "Nova Core IMU+GPS module",
   "chip": "STM32F303CC",
   "required_packages": [
     "stm32_flash",
